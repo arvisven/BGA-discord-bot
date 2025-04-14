@@ -10,3 +10,4 @@ def setupLogging():
             logging.FileHandler("bot.log"),
         ],
     )
+    logging.getLogger("discord").setLevel(logging.ERROR)

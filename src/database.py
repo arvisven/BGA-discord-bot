@@ -107,17 +107,17 @@ class Database:
     def insertGameData(self, id, url, gameName, activePlayerId, discordId):
         self.connect()
         try:
+            # Insert the game into the game_data table (ignore if it already exists)
             self.cursor.execute(
-                "INSERT INTO game_data (id, url, game_name, active_player_id) VALUES (?, ?, ?, ?)",
+                "INSERT OR IGNORE INTO game_data (id, url, game_name, active_player_id) VALUES (?, ?, ?, ?)",
                 (id, url, gameName, activePlayerId),
             )
 
-            # If a discordId is provided, associate the user with the game
-            if discordId:
-                self.cursor.execute(
-                    "INSERT INTO user_games (discord_id, game_id) VALUES (?, ?)",
-                    (discordId, id),
-                )
+            # Associate the user with the game in the user_games table
+            self.cursor.execute(
+                "INSERT OR IGNORE INTO user_games (discord_id, game_id) VALUES (?, ?)",
+                (discordId, id),
+            )
 
             self.conn.commit()
             return Game(id, url, gameName, activePlayerId)

@@ -3,17 +3,20 @@ from discord.ext import tasks
 from . import webscraper
 from src.database import Database
 from . import messageController
+import asyncio
+from asyncio import Lock
 
 database = Database("database.db")
+db_lock = Lock()
 
 
 async def findNewGames(bot, user):
     logging.info(f"Finding all games for player: {user} to check for new ones")
     foundGames = await webscraper.get_current_table_ids(user.bga_id)
-    if foundGames == None:
-        logging.info(f"Player with id {user} has no ongoing games")
+    if not foundGames:
+        log_no_games_found(user)
     else:
-        logging.info(f"Games found: {foundGames}")
+        log_games_found(user, foundGames)
         await checkForNewGames(bot, user, foundGames)
 
 
@@ -21,23 +24,34 @@ async def checkForNewGames(bot, user, foundGames):
     currentGamesMonitored = database.getGameIdsForUser(user.discord_id)
     logging.info(f"currentGamesMonitored found: {currentGamesMonitored}")
 
-    new_games = [
+    new_games = await filter_new_games(foundGames, currentGamesMonitored)
+
+    if new_games:
+        logging.info(f"New game IDs found: {new_games}")
+        for new_game in new_games:
+            await process_new_game(bot, user, new_game)
+    else:
+        logging.info("No new games found.")
+
+
+async def filter_new_games(foundGames, currentGamesMonitored):
+    return [
         game for game in foundGames if int(game["game_id"]) not in currentGamesMonitored
     ]
 
-    if new_games:
-        print("New game IDs found:", new_games)
-        for game in new_games:
-            game_id = game["game_id"]
-            game_url = game["full_url"]
+
+async def process_new_game(bot, user, new_game):
+    async with db_lock:
+        try:
+            game_id = new_game["game_id"]
+            game_url = new_game["full_url"]
             game_name, active_player_id = await webscraper.getGameInfo(game_url)
-            game = database.insertGameData(
+            game_obj = database.insertGameData(
                 game_id, game_url, game_name, active_player_id, user.discord_id
             )
-            await messageController.notifyNewGameMonitored(bot, game)
-
-    else:
-        print("No new games found.")
+            await messageController.notifyNewGameMonitored(bot, game_obj)
+        except Exception as e:
+            logging.error(f"Error inserting new game {new_game}: {e}")
 
 
 # Fetching active player id for a game entity
@@ -79,9 +93,7 @@ async def processGame(bot, game):
 async def processFindNewGames(bot):
     users = database.getAllUsers()
     logging.info(f"Players: {users}")
-
-    for user in users:
-        await findNewGames(bot, user)
+    await asyncio.gather(*(findNewGames(bot, user) for user in users))
 
 
 # Task for fetching active player ids and update database if active player changed
@@ -92,3 +104,11 @@ async def processGames(bot):
 
     for game in games:
         await processGame(bot, game)
+
+
+def log_no_games_found(user):
+    logging.info(f"Player with id {user} has no ongoing games")
+
+
+def log_games_found(user, foundGames):
+    logging.info(f"Games found for player {user}: {foundGames}")

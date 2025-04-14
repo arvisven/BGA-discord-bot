@@ -5,6 +5,8 @@ from . import utils
 from playwright.async_api import async_playwright
 from urllib.parse import urljoin
 
+BASE_URL = "https://sv.boardgamearena.com"
+
 
 async def get_current_table_ids(player_id: str):
     async with async_playwright() as p:
@@ -12,7 +14,7 @@ async def get_current_table_ids(player_id: str):
         # Create a new page to get the list of table IDs
         page = await browser.new_page()
         await page.goto(
-            f"https://sv.boardgamearena.com/playertables?player={player_id}",
+            f"{BASE_URL}/playertables?player={player_id}",
             wait_until="networkidle",
         )
         await page.wait_for_selector(".bga-table-list-item__background")
@@ -39,7 +41,7 @@ async def get_current_table_ids(player_id: str):
         for game_id in table_ids:
             new_page = await browser.new_page()
             await new_page.goto(
-                f"https://sv.boardgamearena.com/table?table={game_id}",
+                f"{BASE_URL}/table?table={game_id}",
                 wait_until="networkidle",
             )
 
@@ -47,8 +49,7 @@ async def get_current_table_ids(player_id: str):
             element = await new_page.query_selector("a#view_end_btn")
             if element is not None:
                 href_value = await element.get_attribute("href")
-                base_url = "https://sv.boardgamearena.com"
-                full_url = urljoin(base_url, href_value)
+                full_url = urljoin(BASE_URL, href_value)
             else:
                 full_url = None
 
