@@ -215,18 +215,6 @@ class Database:
         finally:
             self.close()
 
-    def getAllBgaIds(self):
-        self.connect()
-        try:
-            self.cursor.execute("SELECT bga_id FROM user_data")
-            rows = self.cursor.fetchall()
-            return [row[0] for row in rows]
-        except sqlite3.Error as e:
-            logging.error(f"SQLite error: {e}")
-
-        finally:
-            self.close()
-
     def getAllUsers(self):
         self.connect()
         try:

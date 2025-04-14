@@ -49,15 +49,13 @@ async def notifyer(bot, bgaId, gameId):
         mention = f"<@{discord_id}>"
         channel = bot.get_channel(NOTIFY_CHANNEL_ID)
         game = database.getGameById(gameId)
-        await channel.send(
-            f"Det är din tur {mention} i {game.name}! [Länk]({game.url})"
-        )
+        await channel.send(f"It's your turn {mention} in [{game.name}]({game.url})")
 
 
 async def notify_game_removed(bot, game):
     channel = bot.get_channel(NOTIFY_CHANNEL_ID)
     await channel.send(
-        f"{game.name} med id: {game.id} är avslutat! Grattis till vinnaren!"
+        f"{game.name} with id: {game.id} is finished! Congratz to the winner!"
     )
 
 

@@ -28,7 +28,7 @@ async def find_new_games(bot, user):
 
 async def check_for_new_games(bot, user, found_games):
     current_games_monitored = database.getGameIdsForUser(user.discord_id)
-    logging.info(f"currentGamesMonitored found: {current_games_monitored}")
+    logging.info(f"Current games monitored found: {current_games_monitored}")
 
     new_games = await filter_new_games(found_games, current_games_monitored)
 
@@ -71,12 +71,12 @@ async def process_new_game(bot, user, new_game):
 #
 # If the fetched player id is new, update game entity with new active player id and notify discord user
 async def process_game(bot, game):
-    logging.info(f"Fetching active player for game: {game.name} with id: {game.id}")
+    logging.info(f"Fetching active player for game: {game.name} with ID: {game.id}")
     active_player_id = await webscraper.fetch_active_player(game.url)
     previous_active_player_id = database.getActivePlayer(game.id)
-    logging.info(f"Active player id: {active_player_id}")
+    logging.info(f"Active player ID: {active_player_id}")
     if active_player_id == None:
-        logging.info("No active player id found. Checking if the game has ended")
+        logging.info("No active player ID found. Checking if the game has ended")
         if await webscraper.check_if_game_ended(game.url):
             logging.info("Game results list found, removing game from monitoring")
             messageController.notify_game_removed(bot, game)
@@ -86,7 +86,7 @@ async def process_game(bot, game):
             logging.info("Game results list not found. Keep monitoring game..")
 
     elif active_player_id == previous_active_player_id:
-        logging.info(f"No change of active player with id: {active_player_id}")
+        logging.info(f"No change of active player with ID: {active_player_id}")
 
     else:
         logging.info(
@@ -115,7 +115,7 @@ async def process_games(bot):
 
 
 def log_no_games_found(user):
-    logging.info(f"Player with id {user} has no ongoing games")
+    logging.info(f"Player with ID {user} has no ongoing games")
 
 
 def log_games_found(user, foundGames):

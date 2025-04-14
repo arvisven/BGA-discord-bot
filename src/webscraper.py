@@ -95,5 +95,5 @@ async def get_game_info(url):
         return converted_game_title, active_player_id
     else:
         logging.error(
-            f"Failed to fetch game info:\nGame name: {game_name}\nActive Player Id: {result_active_player_id}"
+            f"Failed to fetch game info:\nGame name: {game_name}\nActive Player ID: {result_active_player_id}"
         )
