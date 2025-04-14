@@ -23,6 +23,7 @@ async def on_ready():
     logging.info(f"We have logged in as {bot.user}")
     database.createTables()
     taskService.processGames.start(bot)
+    taskService.processFindNewGames.start(bot)
 
 
 @bot.event

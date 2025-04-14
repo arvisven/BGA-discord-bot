@@ -43,9 +43,19 @@ class Database:
                 id INTEGER PRIMARY KEY,
                 url STRING,
                 game_name STRING,
-                active_player_id INTEGER
+                active_player_id INTEGER NULL
             )
         """
+        )
+
+        self.cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS user_games (
+                discord_id INTEGER,
+                game_id INTEGER,
+                PRIMARY KEY (discord_id, game_id)
+            )
+            """
         )
 
         self.conn.commit()
@@ -94,14 +104,23 @@ class Database:
         finally:
             self.close()
 
-    def insertGameData(self, id, url, gameName, activePlayerId):
+    def insertGameData(self, id, url, gameName, activePlayerId, discordId):
         self.connect()
         try:
             self.cursor.execute(
                 "INSERT INTO game_data (id, url, game_name, active_player_id) VALUES (?, ?, ?, ?)",
                 (id, url, gameName, activePlayerId),
             )
+
+            # If a discordId is provided, associate the user with the game
+            if discordId:
+                self.cursor.execute(
+                    "INSERT INTO user_games (discord_id, game_id) VALUES (?, ?)",
+                    (discordId, id),
+                )
+
             self.conn.commit()
+            return Game(id, url, gameName, activePlayerId)
 
         except sqlite3.Error as e:
             logging.error(f"SQLite error: {e}")
@@ -205,6 +224,35 @@ class Database:
         except sqlite3.Error as e:
             logging.error(f"SQLite error: {e}")
 
+        finally:
+            self.close()
+
+    def getAllUsers(self):
+        self.connect()
+        try:
+            self.cursor.execute("SELECT discord_id, bga_id FROM user_data")
+            all_users = self.cursor.fetchall()
+
+            User = namedtuple("User", ["discord_id", "bga_id"])
+
+            user_objects = [User(*user_data) for user_data in all_users]
+
+            return user_objects
+        finally:
+            self.close()
+
+    def getGameIdsForUser(self, discord_id):
+        self.connect()
+        try:
+            self.cursor.execute(
+                "SELECT game_id FROM user_games WHERE discord_id = ?", (discord_id,)
+            )
+            rows = self.cursor.fetchall()
+            game_ids = [row[0] for row in rows]
+            return game_ids
+        except sqlite3.Error as e:
+            logging.error(f"SQLite error: {e}")
+            return []
         finally:
             self.close()
 

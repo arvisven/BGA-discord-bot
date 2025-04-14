@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 database = Database("database.db")
 load_dotenv()
-NOTIFY_CHANNEL_ID = os.getenv("NOTIFY_CHANNEL_ID")
+NOTIFY_CHANNEL_ID = int(os.getenv("NOTIFY_CHANNEL_ID"))
 
 
 async def handleCommand(bot, message):
@@ -54,7 +54,9 @@ async def handleCommand(bot, message):
             # Get game name and current active player
             gameName, activePlayerId = await webscraper.getGameInfo(urlParameter)
 
-            database.insertGameData(gameId, urlParameter, gameName, activePlayerId)
+            database.insertGameData(
+                gameId, urlParameter, gameName, activePlayerId, message.author.id
+            )
 
             await message.channel.send(
                 f"Monitoring to {gameName} with id: {gameId} at url: {urlParameter}"
@@ -94,3 +96,17 @@ async def notifyer(bot, bgaId, gameId):
         await channel.send(
             f"Det är din tur {mention} i {game.name}! [Länk]({game.url})"
         )
+
+
+async def notifyGameRemoved(bot, game):
+    channel = bot.get_channel(NOTIFY_CHANNEL_ID)
+    await channel.send(
+        f"{game.name} med id: {game.id} är avslutat! Grattis till vinnaren!"
+    )
+
+
+async def notifyNewGameMonitored(bot, game):
+    channel = bot.get_channel(NOTIFY_CHANNEL_ID)
+    await channel.send(
+        f"Found new game to monitor: {game.name} with id: {game.id} at url: {game.url}"
+    )
