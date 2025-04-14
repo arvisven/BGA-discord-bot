@@ -97,7 +97,7 @@ async def process_game(bot, game):
 
 
 # Task for fetching new games
-@tasks.loop(minutes=1)
+@tasks.loop(minutes=15)
 async def process_find_new_games(bot):
     users = database.getAllUsers()
     logging.info(f"Players: {users}")

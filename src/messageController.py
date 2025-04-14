@@ -21,43 +21,9 @@ def set_database(db):
 async def handle_command(bot, message):
     command = message.content.lower()
 
-    if command.startswith("!hello"):
-        await message.channel.send("hello!")
-
     if command.startswith("!remove_me"):
         database.deleteUserData(message.author.id)
         await message.channel.send("User deleted!")
-
-    #!Listen_to command handling:
-    elif command.startswith("!monitor"):
-        # Get url from command
-        try:
-            _, url_parameter = command.split(" ", 1)
-        except Exception:
-            await message.channel.send("Provide a URL to a board game arena table")
-            return
-
-        try:
-            # Get game id from game url
-            game_id = utils.extractGameId(url_parameter)
-
-            # Get game name and current active player
-            game_name, active_player_id = await webscraper.get_game_info(url_parameter)
-
-            database.insertGameData(
-                game_id, url_parameter, game_name, active_player_id, message.author.id
-            )
-
-            await message.channel.send(
-                f"Monitoring to {game_name} with id: {game_id} at url: {url_parameter}"
-            )
-            await notifyer(bot, active_player_id, game_id)
-
-        except Exception as e:
-            logging.error(f"Error when monitoring: {e}")
-            await message.channel.send(
-                f"Something went wrong when trying to monitoring to game with url: {url_parameter}"
-            )
 
     #!Add_user command handling
     elif command.startswith("!add_user"):
