@@ -6,25 +6,31 @@ from . import messageController
 import asyncio
 from asyncio import Lock
 
-database = Database("database.db")
 db_lock = Lock()
 
+database = None
 
-async def findNewGames(bot, user):
+
+def set_database(db):
+    global database
+    database = db
+
+
+async def find_new_games(bot, user):
     logging.info(f"Finding all games for player: {user} to check for new ones")
-    foundGames = await webscraper.get_current_table_ids(user.bga_id)
-    if not foundGames:
+    found_games = await webscraper.get_current_table_ids(user.bga_id)
+    if not found_games:
         log_no_games_found(user)
     else:
-        log_games_found(user, foundGames)
-        await checkForNewGames(bot, user, foundGames)
+        log_games_found(user, found_games)
+        await check_for_new_games(bot, user, found_games)
 
 
-async def checkForNewGames(bot, user, foundGames):
-    currentGamesMonitored = database.getGameIdsForUser(user.discord_id)
-    logging.info(f"currentGamesMonitored found: {currentGamesMonitored}")
+async def check_for_new_games(bot, user, found_games):
+    current_games_monitored = database.getGameIdsForUser(user.discord_id)
+    logging.info(f"currentGamesMonitored found: {current_games_monitored}")
 
-    new_games = await filter_new_games(foundGames, currentGamesMonitored)
+    new_games = await filter_new_games(found_games, current_games_monitored)
 
     if new_games:
         logging.info(f"New game IDs found: {new_games}")
@@ -34,9 +40,11 @@ async def checkForNewGames(bot, user, foundGames):
         logging.info("No new games found.")
 
 
-async def filter_new_games(foundGames, currentGamesMonitored):
+async def filter_new_games(found_games, current_games_monitored):
     return [
-        game for game in foundGames if int(game["game_id"]) not in currentGamesMonitored
+        game
+        for game in found_games
+        if int(game["game_id"]) not in current_games_monitored
     ]
 
 
@@ -45,11 +53,11 @@ async def process_new_game(bot, user, new_game):
         try:
             game_id = new_game["game_id"]
             game_url = new_game["full_url"]
-            game_name, active_player_id = await webscraper.getGameInfo(game_url)
+            game_name, active_player_id = await webscraper.get_game_info(game_url)
             game_obj = database.insertGameData(
                 game_id, game_url, game_name, active_player_id, user.discord_id
             )
-            await messageController.notifyNewGameMonitored(bot, game_obj)
+            await messageController.notify_new_game_monitored(bot, game_obj)
         except Exception as e:
             logging.error(f"Error inserting new game {new_game}: {e}")
 
@@ -62,48 +70,48 @@ async def process_new_game(bot, user, new_game):
 # If the fetched player id is the same as last time, do nothing
 #
 # If the fetched player id is new, update game entity with new active player id and notify discord user
-async def processGame(bot, game):
+async def process_game(bot, game):
     logging.info(f"Fetching active player for game: {game.name} with id: {game.id}")
-    activePlayerId = await webscraper.fetchActivePlayer(game.url)
-    previousActivePlayerId = database.getActivePlayer(game.id)
-    logging.info(f"Active player id: {activePlayerId}")
-    if activePlayerId == None:
+    active_player_id = await webscraper.fetch_active_player(game.url)
+    previous_active_player_id = database.getActivePlayer(game.id)
+    logging.info(f"Active player id: {active_player_id}")
+    if active_player_id == None:
         logging.info("No active player id found. Checking if the game has ended")
-        if await webscraper.checkIfGameEnded(game.url):
+        if await webscraper.check_if_game_ended(game.url):
             logging.info("Game results list found, removing game from monitoring")
-            messageController.notifyGameRemoved(bot, game)
+            messageController.notify_game_removed(bot, game)
             database.deleteGameData(game.id)
 
         else:
             logging.info("Game results list not found. Keep monitoring game..")
 
-    elif activePlayerId == previousActivePlayerId:
-        logging.info(f"No change of active player with id: {activePlayerId}")
+    elif active_player_id == previous_active_player_id:
+        logging.info(f"No change of active player with id: {active_player_id}")
 
     else:
         logging.info(
-            f"New active player in game: {game.id} New player: {activePlayerId} Previous active player: {previousActivePlayerId}"
+            f"New active player in game: {game.id} New player: {active_player_id} Previous active player: {previous_active_player_id}"
         )
-        database.updateActivePlayer(game.id, activePlayerId)
-        await messageController.notifyer(bot, activePlayerId, game.id)
+        database.updateActivePlayer(game.id, active_player_id)
+        await messageController.notifyer(bot, active_player_id, game.id)
 
 
 # Task for fetching new games
 @tasks.loop(minutes=1)
-async def processFindNewGames(bot):
+async def process_find_new_games(bot):
     users = database.getAllUsers()
     logging.info(f"Players: {users}")
-    await asyncio.gather(*(findNewGames(bot, user) for user in users))
+    await asyncio.gather(*(find_new_games(bot, user) for user in users))
 
 
 # Task for fetching active player ids and update database if active player changed
 @tasks.loop(minutes=1)
-async def processGames(bot):
+async def process_games(bot):
     games = database.getAllGames()
     logging.info(f"Games: {games}")
 
     for game in games:
-        await processGame(bot, game)
+        await process_game(bot, game)
 
 
 def log_no_games_found(user):

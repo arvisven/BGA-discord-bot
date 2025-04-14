@@ -99,7 +99,7 @@ class Database:
                 return discord_id
 
         except sqlite3.Error as e:
-            print(f"SQLite error: {e}")
+            logging.error(f"SQLite error: {e}")
 
         finally:
             self.close()
@@ -134,7 +134,7 @@ class Database:
             self.conn.commit()
 
         except sqlite3.Error as e:
-            print(f"SQLite error: {e}")
+            logging.error(f"SQLite error: {e}")
 
         finally:
             self.close()
