@@ -1,10 +1,25 @@
 # BGA-discord-bot
+
 Discord bot for Board Game Arena notifications
 
-Will monitor available boards for users that opt in and notify them when it is their turn to play.
+## How It Works
+
+### User Registration:
+
+Players can register their BGA user ID with the bot using the !add_user command. Once registered, the bot will automatically monitor all their active games.
+
+### Game Monitoring:
+
+The bot tracks all games a user is participating in. When it's the user's turn, the bot sends a notification to the designated Discord channel.
+
+### User Management:
+
+Users can remove themselves from the database using the !remove_me command.
 
 ## setup
+
 setup .env or env vars:
+
 ```
 DISCORD_TOKEN=MIi...
 NOTIFY_CHANNEL_ID=3u98sjfd9in....
@@ -28,6 +43,7 @@ docker push docker.io/johrad/bga-discord-bot
 ```
 
 ### kubernetes
+
 ```
 # in k8s-manifests.yaml:
 # modify:
