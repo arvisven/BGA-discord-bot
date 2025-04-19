@@ -10,8 +10,8 @@ COPY . /app
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Define environment variable
-ENV DISCORD_TOKEN apa
-ENV NOTIFY_CHANNEL_ID boll
+ENV DISCORD_TOKEN=apa
+ENV NOTIFY_CHANNEL_ID=boll
 
 # Run script.py when the container launches
 CMD ["python", "script.py"]
