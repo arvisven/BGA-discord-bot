@@ -1,17 +1,14 @@
 FROM python:3.12-slim
 
-# Set the working directory in the container
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
-COPY . /app
-
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Define environment variable
 ENV DISCORD_TOKEN=
 ENV NOTIFY_CHANNEL_ID=boll
 
-# Run script.py when the container launches
+COPY requirements.txt /app
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . /app
+RUN playwright install
+
 CMD ["python", "script.py"]
