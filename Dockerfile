@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.12-slim
 
 # Set the working directory in the container
 WORKDIR /app
@@ -10,7 +10,7 @@ COPY . /app
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Define environment variable
-ENV DISCORD_TOKEN=apa
+ENV DISCORD_TOKEN=
 ENV NOTIFY_CHANNEL_ID=boll
 
 # Run script.py when the container launches
