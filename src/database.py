@@ -107,17 +107,26 @@ class Database:
     def insertGameData(self, id, url, gameName, activePlayerId, discordId):
         self.connect()
         try:
-            # Insert the game into the game_data table (ignore if it already exists)
-            self.cursor.execute(
-                "INSERT OR IGNORE INTO game_data (id, url, game_name, active_player_id) VALUES (?, ?, ?, ?)",
-                (id, url, gameName, activePlayerId),
-            )
+            self.cursor.execute("SELECT id FROM game_data WHERE id = ?", (id,))
+            game_exists = self.cursor.fetchone()
 
-            # Associate the user with the game in the user_games table
+            if not game_exists:
+                self.cursor.execute(
+                    "INSERT INTO game_data (id, url, game_name, active_player_id) VALUES (?, ?, ?, ?)",
+                    (id, url, gameName, activePlayerId),
+                )
+
             self.cursor.execute(
-                "INSERT OR IGNORE INTO user_games (discord_id, game_id) VALUES (?, ?)",
+                "SELECT discord_id FROM user_games WHERE discord_id = ? AND game_id = ?",
                 (discordId, id),
             )
+            user_game_exists = self.cursor.fetchone()
+
+            if not user_game_exists:
+                self.cursor.execute(
+                    "INSERT INTO user_games (discord_id, game_id) VALUES (?, ?)",
+                    (discordId, id),
+                )
 
             self.conn.commit()
             return Game(id, url, gameName, activePlayerId)

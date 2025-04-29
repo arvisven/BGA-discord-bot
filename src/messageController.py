@@ -60,7 +60,8 @@ async def notify_game_removed(bot, game):
 
 
 async def notify_new_game_monitored(bot, game):
-    channel = bot.get_channel(NOTIFY_CHANNEL_ID)
-    await channel.send(
-        f"Found new game to monitor: {game.name} with id: {game.id} at url: {game.url}"
-    )
+    if not database.getGameById(game.id):
+        channel = bot.get_channel(NOTIFY_CHANNEL_ID)
+        await channel.send(
+            f"Found new game to monitor: {game.name} with id: {game.id} at url: {game.url}"
+        )

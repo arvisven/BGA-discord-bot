@@ -69,8 +69,8 @@ async def fetch_active_player(url):
 
 async def check_if_game_ended(url):
     r = requests.get(url).text
-    # Checking if 1° is in the text, this occurs when a list of results is avaiable
-    match = re.search(r"1°", r)
+    # Checking if ° is in the text, this occurs when a list of results is avaiable or if the game is abandoned
+    match = re.search(r"°", r)
 
     if match:
         return True
