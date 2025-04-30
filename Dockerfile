@@ -31,14 +31,13 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir playwright
-RUN playwright install --with-deps
-
 ENV DISCORD_TOKEN=
 ENV NOTIFY_CHANNEL_ID=boll
 
 COPY requirements.txt /app
 RUN pip install --no-cache-dir -r requirements.txt
+
+RUN playwright install --with-deps
 
 COPY . /app
 
